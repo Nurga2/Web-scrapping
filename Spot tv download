@@ -1,0 +1,78 @@
+/*
+Jan Bully bg masih belajar, mohon koreksi
+*/
+
+const axios = require('axios')
+
+const BASE = 'https://spotify.downloaderize.com/wp-admin/admin-ajax.php'
+const headers = {
+  authority: 'spotify.downloaderize.com',
+  accept: 'application/json, text/javascript, */*',
+  'accept-language': 'id-ID,id;q=0.9',
+  'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
+  cookie: '_ga=GA1.1.2012466043.1760156238',
+  origin: 'https://spotify.downloaderize.com',
+  referer: 'https://spotify.downloaderize.com/',
+  'sec-ch-ua': '"Chromium";v="139", "Not;A=Brand";v="99"',
+  'sec-ch-ua-mobile': '?1',
+  'sec-ch-ua-platform': '"Android"',
+  'user-agent': 'Mozilla/5.0',
+  'x-requested-with': 'XMLHttpRequest'
+}
+
+async function spotify(q) {
+  if (!q) return { error: 'missing_input' }
+
+  const isUrl = /open\.spotify\.com\/(track|album|playlist)\//.test(q)
+  if (isUrl) return downloadSpotify(q)
+
+  return searchSpotify(q)
+}
+
+async function downloadSpotify(url) {
+  const { data } = await axios.post(
+    BASE,
+    `action=spotify_downloader_get_info&url=${encodeURIComponent(url)}&nonce=2e62f25d0b`,
+    { headers }
+  )
+  const d = data.data
+  return {
+    success: data.success,
+    url: d.url,
+    title: d.title,
+    author: d.author,
+    thumbnail: d.thumbnail,
+    duration: d.duration,
+    medias: d.medias,
+    type: d.type
+  }
+}
+
+async function searchSpotify(query) {
+  const { data } = await axios.get(
+    `${BASE}?action=sts_search_spotify&query=${encodeURIComponent(query)}&security=dd6f557a88`,
+    { headers }
+  )
+
+  const tracks = data?.data?.tracks?.items || []
+
+  const clean = tracks.map(x => ({
+    id: x.id,
+    title: x.name,
+    artist: x.artists?.[0]?.name || null,
+    url: x.external_urls?.spotify || null,
+    album: x.album?.name || null,
+    thumbnail: x.album?.images?.[0]?.url || null,
+    duration_ms: x.duration_ms,
+  }))
+
+  return { success: true, results: clean }
+}
+
+// dl
+const result = await spotify('https://open.spotify.com/track/5O2P9iiztwhomNh8xkR9lJ')
+return result
+
+// search
+// const result = await spotify('night changes') 
+// return result
