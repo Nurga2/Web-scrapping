@@ -8,32 +8,35 @@ export default async function handler(req, res) {
     return res.status(400).json({
       status: false,
       author: author,
-      message: "Parameter 'url' wajib diisi!"
+      message: "Parameter 'url' tidak ditemukan."
     });
   }
+  const cleanAlias = alias ? alias.replace(/[\s-]/g, '_') : "";
   try {
-    const apiUrl = `https://is.gd/create.php?format=json&url=${encodeURIComponent(url)}${alias ? `&shorturl=${encodeURIComponent(alias)}` : ''}`;
+    const apiUrl = `https://is.gd/create.php?format=json&url=${encodeURIComponent(url)}${cleanAlias ? `&shorturl=${encodeURIComponent(cleanAlias)}` : ''}`;
     const response = await axios.get(apiUrl);
     const data = response.data;
     if (data.shorturl) {
       return res.status(200).json({
         status: true,
         author: author,
-        result: {
-          original: url,
-          short: data.shorturl,
-          alias: alias || data.shorturl.split('/').pop(),
+        message: "URL berhasil diperpendek",
+        data: {
+          original_url: url,
+          short_url: data.shorturl,
+          alias_used: data.shorturl.split('/').pop(),
           qr_code: `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${data.shorturl}`
-        }
+        },
+        timestamp: new Date().toISOString()
       });
     } else {
-      throw new Error(data.errormessage || "Gagal memperpendek URL.");
+      throw new Error(data.errormessage || "Gagal memproses URL.");
     }
   } catch (error) {
     return res.status(500).json({
       status: false,
       author: author,
-      error: error.message
+      error_message: error.message
     });
   }
 }
