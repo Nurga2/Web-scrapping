@@ -1,0 +1,113 @@
+// ==========================================
+// Author  : If you like content like this, you can join this channel. 📲
+// Contact : https://t.me/jieshuo_materials
+// ==========================================
+
+import axios from 'axios';
+
+export default async function handler(req, res) {
+  const startTime = Date.now();
+  const author = "AngelaImut";
+
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST');
+  res.setHeader('Content-Type', 'application/json');
+
+  const message = req.query.message || req.query.q;
+
+  if (!message) {
+    return res.status(400).json({
+      status: false,
+      author: author,
+      message: "Masukkan pesan! Contoh: ?message=Halo",
+      timestamp: new Date().toISOString(),
+      responseTime: `${Date.now() - startTime}ms`
+    });
+  }
+
+  const url = "https://www.blackbox.ai/api/chat";
+  const payload = {
+    messages: [
+      {
+        role: 'user',
+        content: message,
+        id: "ChatID-" + Math.random().toString(36).substring(7)
+      }
+    ],
+    agentMode: {},
+    id: "Session-" + Math.random().toString(36).substring(7),
+    previewToken: null,
+    userId: null,
+    codeModelMode: true,
+    trendingAgentMode: {},
+    isMicMode: false,
+    userSystemPrompt: null,
+    maxTokens: 1024,
+    playgroundTopP: null,
+    playgroundTemperature: null,
+    isChromeExt: false,
+    githubToken: '',
+    clickedAnswer2: false,
+    clickedAnswer3: false,
+    clickedForceWebSearch: false,
+    visitFromDelta: false,
+    isMemoryEnabled: false,
+    mobileClient: false,
+    userSelectedModel: null,
+    validated: '00f37b34-a166-4efb-bce5-1312d87f2f94',
+    imageGenerationMode: false,
+    webSearchModePrompt: false,
+    deepSearchMode: false,
+    domains: null,
+    vscodeClient: false,
+    codeInterpreterMode: false,
+    customProfile: {
+      name: '',
+      occupation: '',
+      traits: [],
+      additionalInfo: '',
+      enableNewChats: false
+    },
+    webSearchModeOption: {
+      autoMode: true,
+      webMode: false,
+      offlineMode: false
+    },
+    session: null,
+    isPremium: false,
+    subscriptionCache: null,
+    beastMode: false,
+    reasoningMode: false,
+    designerMode: false,
+    workspaceId: '',
+    asyncMode: false
+  };
+
+  try {
+    const response = await axios.post(url, payload, {
+      headers: {
+        'Accept': '*/*',
+        'Content-Type': 'application/json',
+        'Origin': 'https://www.blackbox.ai',
+        'Referer': 'https://www.blackbox.ai/',
+        'User-Agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Mobile Safari/537.36'
+      }
+    });
+
+    return res.status(200).json({
+      status: true,
+      author: author,
+      result: response.data,
+      timestamp: new Date().toISOString(),
+      responseTime: `${Date.now() - startTime}ms`
+    });
+  } catch (e) {
+    return res.status(500).json({
+      status: false,
+      author: author,
+      error: "Server Error: " + (e.response?.data || e.message),
+      timestamp: new Date().toISOString(),
+      responseTime: `${Date.now() - startTime}ms`
+    });
+  }
+}
