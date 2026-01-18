@@ -1,49 +1,66 @@
-export default async function handler(req, res) {  
-const MY_API_KEY = "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";  
-const { action, prompt, model } = req.query;  
-if (!MY_API_KEY || MY_API_KEY.includes("XXXXX")) {    
-return res.status(500).json({ status: false, message: "Kunci API belum disetting!" });  
-}  
-const headers = {    
-"Content-Type": "application/json",    
-"Authorization": `Bearer ${MY_API_KEY}`  
-};  
-if (action === 'models') {    
-try {      
-const response = await fetch("https://api.openai.com/v1/models", { method: "GET", headers: headers });      
-const data = await response.json();      
-if (!response.ok) throw new Error(data.error?.message);      
-const modelList = data.data.map(m => m.id).sort();      
-return res.status(200).json({ status: true, mode: "list_models", models: modelList });    
-} catch (error) {      
-return res.status(500).json({ status: false, error: error.message });    
-}  
-}  
-const selectedModel = model || "gpt-4.1-mini";  
-if (!prompt) {    
-return res.status(400).json({ status: false, message: "Prompt kosong." });  
-}  
-try {    
-const response = await fetch("https://api.openai.com/v1/chat/completions", {      
-method: "POST",      
-headers: headers,      
-body: JSON.stringify({        
-model: selectedModel,        
-messages: [          
-{ role: "user", content: prompt }        
-],        
-temperature: 0.5      
-})    
-});    
-const data = await response.json();    
-jika  ( data.error ) throw new Error ( data.error.message ) ;    ​​​​​​   
-kembalikan  res.status ( 200 ) .json ( {​​​      
-status : benar ,      
-Penulis : "AngelaImut" ,      
-model : selectedModel ,      
-hasil : data . pilihan [ 0 ] . pesan . konten    
-} ) ;  
-}  tangkap  ( kesalahan )  {    
-return  res.status ( 500 ) .json ( { status : false , error : error.message } ) ;  ​​​​​  
-}
+/**
+ * ZIGLINK URL SHORTENER - Vercel Serverless
+ * Standard: AngelaImut / SofiApis
+ * Original Creator: Hazel
+ */
+
+import axios from 'axios';
+
+export default async function handler(req, res) {
+  // 1. Ambil parameter dari URL (?url=...&alias=...)
+  const { url, alias } = req.query;
+  const author = "AngelaImut";
+
+  // Setup CORS Headers
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Content-Type', 'application/json');
+
+  // Validasi Input
+  if (!url) {
+    return res.status(400).json({
+      status: false,
+      author: author,
+      message: "Parameter 'url' wajib diisi!"
+    });
+  }
+
+  try {
+    // 2. Request ke API Ziglink
+    // Kita gunakan data form-url-encoded sesuai kebutuhan Ziglink
+    const response = await axios.post('https://ziglink.id/api/url/add', {
+      url: url,
+      alias: alias || "" // Jika alias kosong, Ziglink akan buatkan otomatis
+    }, {
+      headers: {
+        'Content-Type': 'application/json',
+        'User-Agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36'
+      }
+    });
+
+    const data = response.data;
+
+    // 3. Cek hasil respon dari Ziglink
+    if (data.status === 'success') {
+      return res.status(200).json({
+        status: true,
+        author: author,
+        result: {
+          original: url,
+          short: data.short_url,
+          alias: data.alias,
+          qr_code: `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${data.short_url}`
+        }
+      });
+    } else {
+      throw new Error(data.message || "Gagal memperpendek URL.");
+    }
+
+  } catch (error) {
+    // 4. Penanganan Error
+    return res.status(500).json({
+      status: false,
+      author: author,
+      error: error.message
+    });
+  }
 }
